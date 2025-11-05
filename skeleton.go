@@ -1,38 +1,27 @@
 package natnetgo
 
-import "encoding/binary"
-
 type Skeleton struct {
-	ID             ID
-	RigidBodyCount int32
-	RigidBodies    []RigidBody
+	ID          ID
+	RigidBodies *List[*RigidBody]
 }
 
-const skeletonDataLen = idLen + 4
+const skeletonMinLen = idLen + listMinLen
 
-func parseSkeleton(data []byte) (Skeleton, int, error) {
-	s := Skeleton{}
-
-	if len(data) < skeletonDataLen {
-		return s, 0, ErrTooShort
+func parseSkeleton(data []byte) (*Skeleton, int, error) {
+	if len(data) < skeletonMinLen {
+		return nil, 0, ErrTooShort
 	}
+
+	s := new(Skeleton)
 
 	id, _ := parseID(data)
 	s.ID = id
 
-	s.RigidBodyCount = int32(binary.LittleEndian.Uint32(data[idLen:]))
-	s.RigidBodies = make([]RigidBody, 0, s.RigidBodyCount)
-
-	offset := idLen + 4
-	for range s.RigidBodyCount {
-		rb, tmpOffset, err := parseRigidBody(data[offset:])
-		if err != nil {
-			return s, 0, err
-		}
-
-		s.RigidBodies = append(s.RigidBodies, rb)
-		offset += tmpOffset
+	rigidBodies, offset, err := parseList(parseRigidBody, data[idLen:])
+	if err != nil {
+		return nil, 0, err
 	}
+	s.RigidBodies = rigidBodies
 
 	return s, offset, nil
 }

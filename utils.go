@@ -15,22 +15,26 @@ func parseID(data []byte) (ID, int) {
 	return ID(binary.LittleEndian.Uint32(data[0:4])), idLen
 }
 
-const vector3Len = 12
-
 type Vector3 struct {
 	X float32
 	Y float32
 	Z float32
 }
 
-func parseVector3(data []byte) (Vector3, int) {
+const vector3Len = 12
+
+func parseVector3(data []byte) (Vector3, int, error) {
 	v := Vector3{}
+
+	if len(data) < vector3Len {
+		return v, 0, ErrTooShort
+	}
 
 	v.X = math.Float32frombits(binary.LittleEndian.Uint32(data[0:4]))
 	v.Y = math.Float32frombits(binary.LittleEndian.Uint32(data[4:8]))
 	v.Z = math.Float32frombits(binary.LittleEndian.Uint32(data[8:12]))
 
-	return v, vector3Len
+	return v, vector3Len, nil
 }
 
 const quaterionLen = 16
@@ -53,63 +57,19 @@ func parseQuaternion(data []byte) (Quaternion, int) {
 	return q, quaterionLen
 }
 
+const nameMinLen = 2
+
 func parseName(data []byte) (string, int, error) {
+	if len(data) < nameMinLen {
+		return "", 0, ErrTooShort
+	}
+
 	n := bytes.IndexByte(data, 0)
 	if n == -1 {
 		return "", 0, ErrInvalidName
 	}
 
 	return string(data[:n]), n + 1, nil
-}
-
-const countLen = 4
-
-func parseCount(data []byte) (int32, int) {
-	return int32(binary.LittleEndian.Uint32(data)), countLen
-}
-
-const dataSizeLen = 4
-
-func parseDataSize(data []byte) (int32, int) {
-	return int32(binary.LittleEndian.Uint32(data)), dataSizeLen
-}
-
-type List[T any] struct {
-	Count    int32
-	DataSize int32
-	Items    []T
-}
-
-const listMinLen = countLen + dataSizeLen
-
-func parseList[T any](parseItem func(data []byte) (T, int, error), data []byte) (List[T], int, error) {
-	l := List[T]{}
-
-	if len(data) < listMinLen {
-		return l, 0, ErrTooShort
-	}
-
-	offset := 0
-
-	count, tmpOffset := parseCount(data)
-	l.Count = count
-	offset += tmpOffset
-
-	dataSize, tmpOffset := parseDataSize(data[offset:])
-	l.DataSize = dataSize
-	offset += tmpOffset
-
-	l.Items = make([]T, 0, l.Count)
-	for range l.Count {
-		item, tmpOffset, err := parseItem(data[offset:])
-		if err != nil {
-			return l, 0, err
-		}
-		l.Items = append(l.Items, item)
-		offset += tmpOffset
-	}
-
-	return l, 0, nil
 }
 
 const int32Len = 4
@@ -142,4 +102,10 @@ const doubleLen = 8
 
 func parseDouble(data []byte) (float64, int) {
 	return math.Float64frombits(binary.LittleEndian.Uint64(data)), doubleLen
+}
+
+const floatLen = 4
+
+func parseFloat(data []byte) (float32, int) {
+	return math.Float32frombits(binary.LittleEndian.Uint32(data)), floatLen
 }

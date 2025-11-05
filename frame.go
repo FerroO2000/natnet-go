@@ -11,11 +11,11 @@ type FramePrefix struct {
 const framePrefixLen = int32Len
 
 func parseFramePrefix(data []byte) (*FramePrefix, int, error) {
-	fp := new(FramePrefix)
-
 	if len(data) < framePrefixLen {
-		return fp, 0, ErrTooShort
+		return nil, 0, ErrTooShort
 	}
+
+	fp := new(FramePrefix)
 
 	// Get the frame number
 	frameNum, _ := parseInt32(data)
@@ -34,18 +34,16 @@ type FrameSuffix struct {
 	PrecisionTimestampSeconds         uint32
 	PrecisionTimestampFractionSeconds uint32
 	Params                            Params
-	IsRecording                       bool
-	TrackedModelsChanged              bool
 }
 
 const frameSuffixLen = 4*uint32Len + doubleLen + 3*timestampLen + paramsLen
 
 func parseFrameSuffix(data []byte) (*FrameSuffix, int, error) {
-	fs := new(FrameSuffix)
-
 	if len(data) < frameSuffixLen {
-		return fs, 0, ErrTooShort
+		return nil, 0, ErrTooShort
 	}
+
+	fs := new(FrameSuffix)
 
 	offset := 0
 
@@ -94,9 +92,16 @@ func parseFrameSuffix(data []byte) (*FrameSuffix, int, error) {
 	fs.Params = params
 	offset += tmpOffset
 
-	// Parse the params
-	fs.IsRecording = params&0x01 != 0
-	fs.TrackedModelsChanged = params&0x02 != 0
-
 	return fs, frameSuffixLen, nil
+}
+
+type FrameSuffixParams = Params
+
+const (
+	FrameSuffixParamsRecording FrameSuffixParams = 1 << iota
+	FrameSuffixParamsTrackedModelsChanged
+)
+
+func (fs *FrameSuffix) ParamsIs(target FrameSuffixParams) bool {
+	return fs.Params&target != 0
 }
