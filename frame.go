@@ -18,7 +18,7 @@ func parseFramePrefix(data []byte) (*FramePrefix, int, error) {
 	fp := new(FramePrefix)
 
 	// Get the frame number
-	frameNum, _ := parseInt32(data)
+	frameNum, _, _ := parseInt32(data)
 	fp.FrameNumber = frameNum
 
 	return fp, framePrefixLen, nil

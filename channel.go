@@ -14,13 +14,18 @@ func parseChannel(data []byte) (*Channel, int, error) {
 
 	dc := new(Channel)
 
-	count, _ := parseInt32(data)
+	count, offset, err := parseInt32(data)
+	if err != nil {
+		return nil, 0, err
+	}
 	dc.FrameCount = count
 
-	offset := channelMinLen
 	dc.FrameValues = make([]float32, 0, dc.FrameCount)
 	for range dc.FrameCount {
-		val, tmpOffset := parseFloat(data[offset:])
+		val, tmpOffset, err := parseFloat(data[offset:])
+		if err != nil {
+			return nil, 0, err
+		}
 		dc.FrameValues = append(dc.FrameValues, val)
 		offset += tmpOffset
 	}

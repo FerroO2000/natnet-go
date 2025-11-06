@@ -20,27 +20,43 @@ func parseMarker(data []byte) (*Marker, int, error) {
 
 	// Get the ids.
 	// The lower half is the marker id, the upper half is the model id
-	tmpID, _ := parseID(data)
+	tmpID, offset, err := parseID(data)
+	if err != nil {
+		return nil, 0, err
+	}
 	m.MarkerID = int16(tmpID & 0x0000ffff)
 	m.ModelID = int16(tmpID >> 16)
 
 	// Get the position
-	pos, _, _ := parseVector3(data[idLen:])
+	pos, tmpOffset, err := parseVector3(data[offset:])
+	if err != nil {
+		return nil, 0, err
+	}
 	m.Position = pos
+	offset += tmpOffset
 
 	// Get the size
-	size, _ := parseFloat(data[idLen+vector3Len:])
+	size, tmpOffset, err := parseFloat(data[offset:])
+	if err != nil {
+		return nil, 0, err
+	}
 	m.Size = size
+	offset += tmpOffset
 
 	// Get the params
-	params, _ := parseParams(data[idLen+vector3Len+floatLen:])
+	params, tmpOffset := parseParams(data[offset:])
 	m.Params = params
+	offset += tmpOffset
 
 	// Get the residual
-	residual, _ := parseFloat(data[idLen+vector3Len+floatLen+paramsLen:])
+	residual, tmpOffset, err := parseFloat(data[offset:])
+	if err != nil {
+		return nil, 0, err
+	}
 	m.Residual = residual
+	offset += tmpOffset
 
-	return m, markerLen, nil
+	return m, offset, nil
 }
 
 type MarkerParams = Params
@@ -62,7 +78,7 @@ func (m *Marker) ParamsIs(target MarkerParams) bool {
 
 type MarkerSet struct {
 	Name    string
-	Markers *List[Vector3]
+	Markers []Vector3
 }
 
 const markerSetMinLen = nameMinLen + listMinLen
@@ -93,4 +109,100 @@ func parseMarkerSet(data []byte) (*MarkerSet, int, error) {
 	offset += tmpOffset
 
 	return ms, offset, nil
+}
+
+type MarkerDesc struct {
+	Name            string
+	ID              ID
+	InitialPosition Vector3
+	Size            float32
+	Params          Params
+}
+
+const markerDescMinLen = nameMinLen + idLen + vector3Len + paramsLen
+
+type MarkerDescParams = Params
+
+const (
+	MarkerDescParamsActive MarkerDescParams = 1 << iota
+)
+
+func parseMarkerDesc(data []byte) (*MarkerDesc, int, error) {
+	if len(data) < markerDescMinLen {
+		return nil, 0, ErrTooShort
+	}
+
+	md := new(MarkerDesc)
+
+	// Get the name
+	name, offset, err := parseName(data)
+	if err != nil {
+		return nil, 0, err
+	}
+	md.Name = name
+
+	// Get the id
+	id, tmpOffset, err := parseID(data)
+	if err != nil {
+		return nil, 0, err
+	}
+	md.ID = id
+	offset += tmpOffset
+
+	// Get the initial position
+	pos, tmpOffset, err := parseVector3(data[offset:])
+	if err != nil {
+		return nil, 0, err
+	}
+	md.InitialPosition = pos
+	offset += tmpOffset
+
+	// Get the size
+	size, tmpOffset, err := parseFloat(data[offset:])
+	if err != nil {
+		return nil, 0, err
+	}
+	md.Size = size
+	offset += tmpOffset
+
+	// Get the params
+	params, tmpOffset := parseParams(data[offset:])
+	md.Params = params
+	offset += tmpOffset
+
+	return md, 0, nil
+}
+
+func (md *MarkerDesc) ParamsIs(target MarkerDescParams) bool {
+	return md.Params&target != 0
+}
+
+type MarkerSetDesc struct {
+	Name        string
+	MarkerNames []string
+}
+
+const markerSetDescMinLen = nameMinLen + listMinLen
+
+func parseMarkerSetDesc(data []byte) (*MarkerSetDesc, int, error) {
+	if len(data) < markerSetDescMinLen {
+		return nil, 0, ErrTooShort
+	}
+
+	msd := new(MarkerSetDesc)
+
+	name, offset, err := parseName(data)
+	if err != nil {
+		return nil, 0, err
+	}
+	msd.Name = name
+
+	markerNames, tmpOffset, err := parseList(parseName, data[offset:])
+	if err != nil {
+		return nil, 0, err
+	}
+	msd.MarkerNames = markerNames
+	offset += tmpOffset
+
+	return msd, offset, nil
 }

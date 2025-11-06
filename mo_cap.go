@@ -2,14 +2,14 @@ package natnetgo
 
 type MoCap struct {
 	FramePrefix   *FramePrefix
-	MarkerSets    *SizedList[*MarkerSet]
-	OtherMarkers  *SizedList[Vector3]
-	RigidBodies   *SizedList[*RigidBody]
-	Skeletons     *SizedList[*Skeleton]
-	Assets        *SizedList[*Asset]
-	LabeledMarkes *SizedList[*Marker]
-	ForcePlates   *SizedList[*ForcePlate]
-	Devices       *SizedList[*Device]
+	MarkerSets    []*MarkerSet
+	OtherMarkers  []Vector3
+	RigidBodies   []*RigidBody
+	Skeletons     []*Skeleton
+	Assets        []*Asset
+	LabeledMarkes []*Marker
+	ForcePlates   []*ForcePlate
+	Devices       []*Device
 	FrameSuffix   *FrameSuffix
 }
 
