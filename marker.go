@@ -145,7 +145,7 @@ func decodeMarkerDesc(data []byte) (*MarkerDesc, int, error) {
 	md.Name = name
 
 	// Get the id
-	id, tmpOffset, err := decodeID(data)
+	id, tmpOffset, err := decodeID(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
