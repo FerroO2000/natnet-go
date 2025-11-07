@@ -230,3 +230,17 @@ func parseList[T any](parseItem parseItemFn[T], data []byte) ([]T, int, error) {
 
 	return items, offset, nil
 }
+
+const uint16Len = 2
+
+func parseUint16(data []byte) (uint16, int, error) {
+	if len(data) < uint16Len {
+		return 0, 0, ErrTooShort
+	}
+
+	return binary.LittleEndian.Uint16(data), uint16Len, nil
+}
+
+func encodeUint16(data []byte, val uint16) {
+	binary.LittleEndian.PutUint16(data, val)
+}
