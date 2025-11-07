@@ -7,20 +7,20 @@ type ForcePlate struct {
 
 const forcePlateMinLen = idLen + listMinLen
 
-func parseForcePlate(data []byte) (*ForcePlate, int, error) {
+func decodeForcePlate(data []byte) (*ForcePlate, int, error) {
 	if len(data) < forcePlateMinLen {
 		return nil, 0, ErrTooShort
 	}
 
 	fp := new(ForcePlate)
 
-	id, offset, err := parseID(data)
+	id, offset, err := decodeID(data)
 	if err != nil {
 		return nil, 0, err
 	}
 	fp.ID = id
 
-	channels, offset, err := parseList(parseChannel, data[idLen:])
+	channels, offset, err := decodeList(decodeChannel, data[idLen:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -42,9 +42,9 @@ type ForcePlateDesc struct {
 	ChannelNames      []string
 }
 
-const forcePlateDescMinLen = idLen + nameMinLen + 2*int32Len + (2+12*12+4*3)*floatLen + vector3Len + listMinLen
+const forcePlateDescMinLen = idLen + stringMinLen + 2*int32Len + (2+12*12+4*3)*floatLen + vector3Len + listMinLen
 
-func parseForcePlateDesc(data []byte) (*ForcePlateDesc, int, error) {
+func decodeForcePlateDesc(data []byte) (*ForcePlateDesc, int, error) {
 	if len(data) < forcePlateDescMinLen {
 		return nil, 0, ErrTooShort
 	}
@@ -52,14 +52,14 @@ func parseForcePlateDesc(data []byte) (*ForcePlateDesc, int, error) {
 	fpd := new(ForcePlateDesc)
 
 	// Get the id
-	id, offset, err := parseID(data)
+	id, offset, err := decodeID(data)
 	if err != nil {
 		return nil, 0, err
 	}
 	fpd.ID = id
 
 	// Get the serial number
-	sn, tmpOffset, err := parseName(data[idLen:])
+	sn, tmpOffset, err := decodeString(data[idLen:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -67,14 +67,14 @@ func parseForcePlateDesc(data []byte) (*ForcePlateDesc, int, error) {
 	offset += tmpOffset
 
 	// Get the width and length
-	width, tmpOffset, err := parseFloat(data[offset:])
+	width, tmpOffset, err := decodeFloat(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
 	fpd.Width = width
 	offset += tmpOffset
 
-	length, tmpOffset, err := parseFloat(data[offset:])
+	length, tmpOffset, err := decodeFloat(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -82,7 +82,7 @@ func parseForcePlateDesc(data []byte) (*ForcePlateDesc, int, error) {
 	offset += tmpOffset
 
 	// Get the origin
-	origin, tmpOffset, err := parseVector3(data[offset:])
+	origin, tmpOffset, err := decodeVector3(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -90,7 +90,7 @@ func parseForcePlateDesc(data []byte) (*ForcePlateDesc, int, error) {
 	offset += tmpOffset
 
 	// Get the calibration matrix
-	calibrationMat, tmpOffset, err := parseCalibrationMatrix(data[offset:])
+	calibrationMat, tmpOffset, err := decodeCalibrationMatrix(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -98,7 +98,7 @@ func parseForcePlateDesc(data []byte) (*ForcePlateDesc, int, error) {
 	offset += tmpOffset
 
 	// Get the corners
-	corners, tmpOffset, err := parseCorners(data[offset:])
+	corners, tmpOffset, err := decodeCorners(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -106,7 +106,7 @@ func parseForcePlateDesc(data []byte) (*ForcePlateDesc, int, error) {
 	offset += tmpOffset
 
 	// Get the plate type
-	plateType, tmpOffset, err := parseInt32(data[offset:])
+	plateType, tmpOffset, err := decodeInt32(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -114,7 +114,7 @@ func parseForcePlateDesc(data []byte) (*ForcePlateDesc, int, error) {
 	offset += tmpOffset
 
 	// Get the channel type
-	channelType, tmpOffset, err := parseInt32(data[offset:])
+	channelType, tmpOffset, err := decodeInt32(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -122,7 +122,7 @@ func parseForcePlateDesc(data []byte) (*ForcePlateDesc, int, error) {
 	offset += tmpOffset
 
 	// Get the channel names
-	channelNames, tmpOffset, err := parseList(parseName, data[offset:])
+	channelNames, tmpOffset, err := decodeList(decodeString, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}

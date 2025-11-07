@@ -1,54 +1,48 @@
 package natnetgo
 
-import "errors"
-
 type MessageType uint16
 
 const (
-	MessageTypeConnect MessageType = iota // Command
-	MessageTypeServerInfo
-	MessageTypeRequest // Command
-	MessageTypeResponse
-	MessageTypeRequestModelDef // Command
-	MessageTypeModelDef
-	MessageTypeRequestFrameOfData // Command
-	MessageTypeFrameOfData
-	MessageTypeMessageString
-	MessageTypeDisconnect // Command?
-	MessageTypeKeepAlive  // Command
-	MessageTypeDisconnectByTimeout
-	MessageTypeEchoRequest
-	MessageTypeEchoResponse
-	MessageTypeDiscovery
+	MessageTypeServerInfo          MessageType = 1
+	MessageTypeResponse            MessageType = 3
+	MessageTypeModelDescData       MessageType = 5
+	MessageTypeMoCapData           MessageType = 7
+	MessageTypeMessageString       MessageType = 8
+	MessageTypeDisconnect          MessageType = 9
+	MessageTypeDisconnectByTimeout MessageType = 11
+	MessageTypeEchoRequest         MessageType = 12
+	MessageTypeEchoResponse        MessageType = 13
+	MessageTypeDiscovery           MessageType = 14
 	MessageTypeUnrecognizedRequest MessageType = 100
 )
 
 type Message struct {
-	Type        MessageType
-	Size        uint16
-	ServerInfo  *ServerInfo
-	Response    *Response
-	Description *Desc
-	MoCap       *MoCap
-	String      string
+	Type MessageType
+	Size uint16
+
+	ServerInfo    *ServerInfo
+	Response      *Response
+	ModelDesc     *ModelDesc
+	MoCap         *MoCap
+	MessageString string
 }
 
 const messageMinLen = 2 * uint16Len
 
-func ParseMessage(data []byte) (*Message, error) {
+func DecodeMessage(data []byte) (*Message, error) {
 	if len(data) < messageMinLen {
 		return nil, ErrTooShort
 	}
 
 	m := new(Message)
 
-	typ, offset, err := parseUint16(data)
+	typ, offset, err := decodeUint16(data)
 	if err != nil {
 		return nil, err
 	}
 	m.Type = MessageType(typ)
 
-	size, tmpOffset, err := parseUint16(data[offset:])
+	size, tmpOffset, err := decodeUint16(data[offset:])
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +51,7 @@ func ParseMessage(data []byte) (*Message, error) {
 
 	switch m.Type {
 	case MessageTypeServerInfo:
-		serverInfo, _, err := parseServerInfo(data[offset:])
+		serverInfo, _, err := decodeServerInfo(data[offset:])
 		if err != nil {
 			return nil, err
 		}
@@ -70,29 +64,26 @@ func ParseMessage(data []byte) (*Message, error) {
 		}
 		m.Response = resp
 
-	case MessageTypeModelDef:
-		desc, _, err := parseDesc(data[offset:])
+	case MessageTypeModelDescData:
+		desc, _, err := decodeModelDesc(data[offset:])
 		if err != nil {
 			return nil, err
 		}
-		m.Description = desc
+		m.ModelDesc = desc
 
-	case MessageTypeFrameOfData:
-		moCap, _, err := parseMoCap(data[offset:])
+	case MessageTypeMoCapData:
+		moCap, _, err := decodeMoCap(data[offset:])
 		if err != nil {
 			return nil, err
 		}
 		m.MoCap = moCap
 
 	case MessageTypeMessageString:
-		str, _, err := parseName(data[offset:])
+		str, _, err := decodeString(data[offset:])
 		if err != nil {
 			return nil, err
 		}
-		m.String = str
-
-	case MessageTypeUnrecognizedRequest:
-		return nil, errors.New("unrecognized request")
+		m.MessageString = str
 	}
 
 	return m, nil

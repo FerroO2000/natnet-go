@@ -2,43 +2,43 @@ package natnetgo
 
 import "errors"
 
-type Desc struct {
-	Datasets []*DescDataset
+type ModelDesc struct {
+	Descriptions []*Desc
 }
 
-const descMinLen = int32Len
+const modelDescMinLen = int32Len
 
-func parseDesc(data []byte) (*Desc, int, error) {
-	if len(data) < descMinLen {
+func decodeModelDesc(data []byte) (*ModelDesc, int, error) {
+	if len(data) < modelDescMinLen {
 		return nil, 0, ErrTooShort
 	}
 
-	d := new(Desc)
+	md := new(ModelDesc)
 
-	// Get the list of datasets
-	datasets, offset, err := parseList(parseDescDataset, data)
+	// Get the list of model descriptions
+	descriptions, offset, err := decodeList(decodeDesc, data)
 	if err != nil {
 		return nil, 0, err
 	}
-	d.Datasets = datasets
+	md.Descriptions = descriptions
 
-	return d, offset, nil
+	return md, offset, nil
 }
 
-type DescDatasetType = uint8
+type DescType = uint8
 
 const (
-	DescDatasetTypeMarkerSet DescDatasetType = iota
-	DescDatasetTypeRigidBody
-	DescDatasetTypeSkeleton
-	DescDatasetTypeForcePlate
-	DescDatasetTypeDevice
-	DescDatasetTypeCamera
-	DescDatasetTypeAsset
+	DescTypeMarkerSet DescType = iota
+	DescTypeRigidBody
+	DescTypeSkeleton
+	DescTypeForcePlate
+	DescTypeDevice
+	DescTypeCamera
+	DescTypeAsset
 )
 
-type DescDataset struct {
-	Type       DescDatasetType
+type Desc struct {
+	Type       DescType
 	MarkerSet  *MarkerSetDesc
 	RigidBody  *RigidBodyDesc
 	Skeleton   *SkeletonDesc
@@ -48,88 +48,88 @@ type DescDataset struct {
 	Asset      *AssetDesc
 }
 
-const descDatasetMinLen = 2 * int32Len
+const descMinLen = 2 * int32Len
 
-func parseDescDataset(data []byte) (*DescDataset, int, error) {
-	if len(data) < descDatasetMinLen {
+func decodeDesc(data []byte) (*Desc, int, error) {
+	if len(data) < descMinLen {
 		return nil, 0, ErrTooShort
 	}
 
-	dd := new(DescDataset)
+	d := new(Desc)
 
 	// Get the type
-	typ, _, err := parseInt32(data)
+	typ, _, err := decodeInt32(data)
 	if err != nil {
 		return nil, 0, err
 	}
-	dd.Type = DescDatasetType(typ)
+	d.Type = DescType(typ)
 
 	// Check the size of the dataset
-	sizeByte, _, err := parseInt32(data[int32Len:])
+	sizeByte, _, err := decodeInt32(data[int32Len:])
 	if err != nil {
 		return nil, 0, err
 	}
 
-	startOffset := descDatasetMinLen
+	startOffset := descMinLen
 	endOffset := startOffset + int(sizeByte)
 
 	if len(data) < endOffset {
 		return nil, 0, ErrTooShort
 	}
 
-	switch dd.Type {
-	case DescDatasetTypeMarkerSet:
-		markerSet, _, err := parseMarkerSetDesc(data[startOffset:endOffset])
+	switch d.Type {
+	case DescTypeMarkerSet:
+		markerSet, _, err := decodeMarkerSetDesc(data[startOffset:endOffset])
 		if err != nil {
 			return nil, 0, err
 		}
-		dd.MarkerSet = markerSet
+		d.MarkerSet = markerSet
 
-	case DescDatasetTypeRigidBody:
-		rigidBody, _, err := parseRigidBodyDesc(data[startOffset:endOffset])
+	case DescTypeRigidBody:
+		rigidBody, _, err := decodeRigidBodyDesc(data[startOffset:endOffset])
 		if err != nil {
 			return nil, 0, err
 		}
-		dd.RigidBody = rigidBody
+		d.RigidBody = rigidBody
 
-	case DescDatasetTypeSkeleton:
-		skeleton, _, err := parseSkeletonDesc(data[startOffset:endOffset])
+	case DescTypeSkeleton:
+		skeleton, _, err := decodeSkeletonDesc(data[startOffset:endOffset])
 		if err != nil {
 			return nil, 0, err
 		}
-		dd.Skeleton = skeleton
+		d.Skeleton = skeleton
 
-	case DescDatasetTypeForcePlate:
-		forcePlate, _, err := parseForcePlateDesc(data[startOffset:endOffset])
+	case DescTypeForcePlate:
+		forcePlate, _, err := decodeForcePlateDesc(data[startOffset:endOffset])
 		if err != nil {
 			return nil, 0, err
 		}
-		dd.ForcePlate = forcePlate
+		d.ForcePlate = forcePlate
 
-	case DescDatasetTypeDevice:
-		device, _, err := parseDeviceDesc(data[startOffset:endOffset])
+	case DescTypeDevice:
+		device, _, err := decodeDeviceDesc(data[startOffset:endOffset])
 		if err != nil {
 			return nil, 0, err
 		}
-		dd.Device = device
+		d.Device = device
 
-	case DescDatasetTypeCamera:
-		camera, _, err := parseCameraDesc(data[startOffset:endOffset])
+	case DescTypeCamera:
+		camera, _, err := decodeCameraDesc(data[startOffset:endOffset])
 		if err != nil {
 			return nil, 0, err
 		}
-		dd.Camera = camera
+		d.Camera = camera
 
-	case DescDatasetTypeAsset:
-		asset, _, err := parseAssetDesc(data[startOffset:endOffset])
+	case DescTypeAsset:
+		asset, _, err := decodeAssetDesc(data[startOffset:endOffset])
 		if err != nil {
 			return nil, 0, err
 		}
-		dd.Asset = asset
+		d.Asset = asset
 
 	default:
 		return nil, 0, errors.New("invalid description type")
 	}
 
-	return dd, endOffset, nil
+	return d, endOffset, nil
 }

@@ -20,13 +20,13 @@ func decodeResponse(data []byte) (*Response, int, error) {
 	r := new(Response)
 
 	if len(data) == responseMinLen {
-		code, offset, _ := parseInt32(data)
+		code, offset, _ := decodeInt32(data)
 		r.Code = code
 
 		return r, offset, nil
 	}
 
-	message, offset, err := parseName(data[responseMinLen:])
+	message, offset, err := decodeString(data[responseMinLen:])
 	if err != nil {
 		return nil, 0, err
 	}

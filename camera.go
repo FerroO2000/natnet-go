@@ -6,29 +6,29 @@ type CameraDesc struct {
 	Orientation Quaternion
 }
 
-const cameraDescLen = nameMinLen + vector3Len + quaterionLen
+const cameraDescLen = stringMinLen + vector3Len + quaterionLen
 
-func parseCameraDesc(data []byte) (*CameraDesc, int, error) {
+func decodeCameraDesc(data []byte) (*CameraDesc, int, error) {
 	if len(data) < cameraDescLen {
 		return nil, 0, ErrTooShort
 	}
 
 	c := new(CameraDesc)
 
-	name, offset, err := parseName(data)
+	name, offset, err := decodeString(data)
 	if err != nil {
 		return nil, 0, err
 	}
 	c.Name = name
 
-	pos, tmpOffset, err := parseVector3(data[offset:])
+	pos, tmpOffset, err := decodeVector3(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
 	c.Position = pos
 	offset += tmpOffset
 
-	rot, tmpOffset, err := parseQuaternion(data[offset:])
+	rot, tmpOffset, err := decodeQuaternion(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}

@@ -8,7 +8,7 @@ type Asset struct {
 
 const assetMinLen = 2 * (idLen + listMinLen)
 
-func parseAsset(data []byte) (*Asset, int, error) {
+func decodeAsset(data []byte) (*Asset, int, error) {
 	if len(data) < assetMinLen {
 		return nil, 0, ErrTooShort
 	}
@@ -16,21 +16,21 @@ func parseAsset(data []byte) (*Asset, int, error) {
 	ass := new(Asset)
 
 	// Get the id
-	id, offset, err := parseID(data)
+	id, offset, err := decodeID(data)
 	if err != nil {
 		return nil, 0, err
 	}
 	ass.ID = id
 
 	// Get the rigid bodies
-	rigidBodies, offset, err := parseList(parseRigidBody, data[idLen:])
+	rigidBodies, offset, err := decodeList(decodeRigidBody, data[idLen:])
 	if err != nil {
 		return nil, 0, err
 	}
 	ass.RigidBodies = rigidBodies
 
 	// Get the markers
-	markers, offset, err := parseList(parseMarker, data[offset:])
+	markers, offset, err := decodeList(decodeMarker, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -47,9 +47,9 @@ type AssetDesc struct {
 	Markers     []*MarkerDesc
 }
 
-const assetDescMinLen = nameMinLen + int32Len + idLen + 2*listMinLen
+const assetDescMinLen = stringMinLen + int32Len + idLen + 2*listMinLen
 
-func parseAssetDesc(data []byte) (*AssetDesc, int, error) {
+func decodeAssetDesc(data []byte) (*AssetDesc, int, error) {
 	if len(data) < assetDescMinLen {
 		return nil, 0, ErrTooShort
 	}
@@ -57,14 +57,14 @@ func parseAssetDesc(data []byte) (*AssetDesc, int, error) {
 	ad := new(AssetDesc)
 
 	// Get the name
-	name, offset, err := parseName(data)
+	name, offset, err := decodeString(data)
 	if err != nil {
 		return nil, 0, err
 	}
 	ad.Name = name
 
 	// Get the type
-	typ, tmpOffset, err := parseInt32(data[offset:])
+	typ, tmpOffset, err := decodeInt32(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -72,7 +72,7 @@ func parseAssetDesc(data []byte) (*AssetDesc, int, error) {
 	offset += tmpOffset
 
 	// Get the id
-	id, tmpOffset, err := parseID(data[offset:])
+	id, tmpOffset, err := decodeID(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -80,14 +80,14 @@ func parseAssetDesc(data []byte) (*AssetDesc, int, error) {
 	offset += tmpOffset
 
 	// Get the rigid bodies
-	rigidBodies, offset, err := parseList(parseRigidBodyDesc, data[offset:])
+	rigidBodies, offset, err := decodeList(decodeRigidBodyDesc, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
 	ad.RigidBodies = rigidBodies
 
 	// Get the markers
-	markers, offset, err := parseList(parseMarkerDesc, data[offset:])
+	markers, offset, err := decodeList(decodeMarkerDesc, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}

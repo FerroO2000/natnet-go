@@ -7,14 +7,14 @@ type Channel struct {
 
 const channelMinLen = int32Len
 
-func parseChannel(data []byte) (*Channel, int, error) {
+func decodeChannel(data []byte) (*Channel, int, error) {
 	if len(data) < channelMinLen {
 		return nil, 0, ErrTooShort
 	}
 
 	dc := new(Channel)
 
-	count, offset, err := parseInt32(data)
+	count, offset, err := decodeInt32(data)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -22,7 +22,7 @@ func parseChannel(data []byte) (*Channel, int, error) {
 
 	dc.FrameValues = make([]float32, 0, dc.FrameCount)
 	for range dc.FrameCount {
-		val, tmpOffset, err := parseFloat(data[offset:])
+		val, tmpOffset, err := decodeFloat(data[offset:])
 		if err != nil {
 			return nil, 0, err
 		}

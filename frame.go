@@ -10,7 +10,7 @@ type FramePrefix struct {
 
 const framePrefixLen = int32Len
 
-func parseFramePrefix(data []byte) (*FramePrefix, int, error) {
+func decodeFramePrefix(data []byte) (*FramePrefix, int, error) {
 	if len(data) < framePrefixLen {
 		return nil, 0, ErrTooShort
 	}
@@ -18,7 +18,7 @@ func parseFramePrefix(data []byte) (*FramePrefix, int, error) {
 	fp := new(FramePrefix)
 
 	// Get the frame number
-	frameNum, _, _ := parseInt32(data)
+	frameNum, _, _ := decodeInt32(data)
 	fp.FrameNumber = frameNum
 
 	return fp, framePrefixLen, nil
@@ -38,7 +38,7 @@ type FrameSuffix struct {
 
 const frameSuffixLen = 4*uint32Len + doubleLen + 3*timestampLen + paramsLen
 
-func parseFrameSuffix(data []byte) (*FrameSuffix, int, error) {
+func decodeFrameSuffix(data []byte) (*FrameSuffix, int, error) {
 	if len(data) < frameSuffixLen {
 		return nil, 0, ErrTooShort
 	}
@@ -48,47 +48,62 @@ func parseFrameSuffix(data []byte) (*FrameSuffix, int, error) {
 	offset := 0
 
 	// Get the timecode
-	timecode, tmpOffset := parseUint32(data[offset:])
+	timecode, tmpOffset := decodeUint32(data[offset:])
 	fs.Timecode = timecode
 	offset += tmpOffset
 
 	// Get the timecode subframe
-	timecodeSubframe, tmpOffset := parseUint32(data[offset:])
+	timecodeSubframe, tmpOffset := decodeUint32(data[offset:])
 	fs.TimecodeSubframe = timecodeSubframe
 	offset += tmpOffset
 
 	// Get the software timestamp
-	swTime, tmpOffset := parseDouble(data[offset:])
+	swTime, tmpOffset, err := decodeDouble(data[offset:])
+	if err != nil {
+		return nil, 0, err
+	}
 	fs.SoftwareTimestamp = swTime
 	offset += tmpOffset
 
 	// Get the camera mid exposure timestamp
-	cameraMidExpTime, tmpOffset := parseTimestamp(data[offset:])
+	cameraMidExpTime, tmpOffset, err := decodeTimestamp(data[offset:])
+	if err != nil {
+		return nil, 0, err
+	}
 	fs.CameraMidExposureTimestamp = cameraMidExpTime
 	offset += tmpOffset
 
 	// Get the camera data received timestamp
-	cameraDataReceivedTime, tmpOffset := parseTimestamp(data[offset:])
+	cameraDataReceivedTime, tmpOffset, err := decodeTimestamp(data[offset:])
+	if err != nil {
+		return nil, 0, err
+	}
 	fs.CameraDataReceivedTimestamp = cameraDataReceivedTime
 	offset += tmpOffset
 
 	// Get the transmit timestamp
-	transmitTime, tmpOffset := parseTimestamp(data[offset:])
+	transmitTime, tmpOffset, err := decodeTimestamp(data[offset:])
+	if err != nil {
+		return nil, 0, err
+	}
 	fs.TransmitTimestamp = transmitTime
 	offset += tmpOffset
 
 	// Get the precision timestamp seconds
-	precisionTimestampSeconds, tmpOffset := parseUint32(data[offset:])
+	precisionTimestampSeconds, tmpOffset := decodeUint32(data[offset:])
 	fs.PrecisionTimestampSeconds = precisionTimestampSeconds
 	offset += tmpOffset
 
 	// Get the precision timestamp fraction seconds
-	precisionTimestampFractionSeconds, tmpOffset := parseUint32(data[offset:])
+	precisionTimestampFractionSeconds, tmpOffset := decodeUint32(data[offset:])
 	fs.PrecisionTimestampFractionSeconds = precisionTimestampFractionSeconds
 	offset += tmpOffset
 
 	// Get the params
-	params, tmpOffset := parseParams(data[offset:])
+	params, tmpOffset, err := decodeParams(data[offset:])
+	if err != nil {
+		return nil, 0, err
+	}
 	fs.Params = params
 	offset += tmpOffset
 

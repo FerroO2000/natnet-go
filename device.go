@@ -7,20 +7,20 @@ type Device struct {
 
 const deviceMinLen = idLen + listMinLen
 
-func parseDevice(data []byte) (*Device, int, error) {
+func decodeDevice(data []byte) (*Device, int, error) {
 	if len(data) < deviceMinLen {
 		return nil, 0, ErrTooShort
 	}
 
 	d := new(Device)
 
-	id, offset, err := parseID(data)
+	id, offset, err := decodeID(data)
 	if err != nil {
 		return nil, 0, err
 	}
 	d.ID = id
 
-	channels, tmpOffset, err := parseList(parseChannel, data[offset:])
+	channels, tmpOffset, err := decodeList(decodeChannel, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -39,9 +39,9 @@ type DeviceDesc struct {
 	ChannelNames    []string
 }
 
-const deviceDescMinLen = idLen + 2*nameMinLen
+const deviceDescMinLen = idLen + 2*stringMinLen
 
-func parseDeviceDesc(data []byte) (*DeviceDesc, int, error) {
+func decodeDeviceDesc(data []byte) (*DeviceDesc, int, error) {
 	if len(data) < deviceDescMinLen {
 		return nil, 0, ErrTooShort
 	}
@@ -49,20 +49,20 @@ func parseDeviceDesc(data []byte) (*DeviceDesc, int, error) {
 	dd := new(DeviceDesc)
 
 	// Get the id
-	id, offset, _ := parseID(data)
+	id, offset, _ := decodeID(data)
 	dd.ID = id
 
 	// Get the name and serial number
-	name, tmpOffset, _ := parseName(data[offset:])
+	name, tmpOffset, _ := decodeString(data[offset:])
 	dd.Name = name
 	offset += tmpOffset
 
-	serialNumber, tmpOffset, _ := parseName(data[offset:])
+	serialNumber, tmpOffset, _ := decodeString(data[offset:])
 	dd.SerialNumber = serialNumber
 	offset += tmpOffset
 
 	// Get the name of the channels
-	channelNames, tmpOffset, err := parseList(parseName, data[offset:])
+	channelNames, tmpOffset, err := decodeList(decodeString, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}

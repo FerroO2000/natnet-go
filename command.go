@@ -18,15 +18,15 @@ func encodeCommand(typ commandType, cmd string) ([]byte, int) {
 		cmd = ""
 	}
 
+	offset := 2 * uint16Len
+
 	cmdBytes := []byte(cmd)
 	cmdBytesLen := len(cmdBytes)
-	dataLen := 2*uint16Len + cmdBytesLen + 1
+	dataLen := offset + cmdBytesLen + 1
 	data := make([]byte, dataLen)
 
 	encodeUint16(data, uint16(typ))
 	encodeUint16(data[2:4], uint16(cmdBytesLen+1))
-
-	offset := 4
 
 	copy(data[offset:offset+cmdBytesLen], cmdBytes)
 	data[offset+cmdBytesLen] = 0

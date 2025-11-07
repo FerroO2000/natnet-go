@@ -13,12 +13,12 @@ type MoCap struct {
 	FrameSuffix   *FrameSuffix
 }
 
-func parseMoCap(data []byte) (*MoCap, int, error) {
+func decodeMoCap(data []byte) (*MoCap, int, error) {
 	mc := new(MoCap)
 	offset := 0
 
 	// Get frame prefix
-	fp, tmpOffset, err := parseFramePrefix(data)
+	fp, tmpOffset, err := decodeFramePrefix(data)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -26,7 +26,7 @@ func parseMoCap(data []byte) (*MoCap, int, error) {
 	offset += tmpOffset
 
 	// Get the list of marker sets
-	markerSets, tmpOffset, err := parseSizedList(parseMarkerSet, data[offset:])
+	markerSets, tmpOffset, err := decodeSizedList(decodeMarkerSet, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -34,7 +34,7 @@ func parseMoCap(data []byte) (*MoCap, int, error) {
 	offset += tmpOffset
 
 	// Get the list of other markers
-	otherMarkers, tmpOffset, err := parseSizedList(parseVector3, data[offset:])
+	otherMarkers, tmpOffset, err := decodeSizedList(decodeVector3, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -42,7 +42,7 @@ func parseMoCap(data []byte) (*MoCap, int, error) {
 	offset += tmpOffset
 
 	// Get the list of rigid bodies
-	rigidBodies, tmpOffset, err := parseSizedList(parseRigidBody, data[offset:])
+	rigidBodies, tmpOffset, err := decodeSizedList(decodeRigidBody, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -50,7 +50,7 @@ func parseMoCap(data []byte) (*MoCap, int, error) {
 	offset += tmpOffset
 
 	// Get the list of skeletons
-	skeletons, tmpOffset, err := parseSizedList(parseSkeleton, data[offset:])
+	skeletons, tmpOffset, err := decodeSizedList(decodeSkeleton, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -58,7 +58,7 @@ func parseMoCap(data []byte) (*MoCap, int, error) {
 	offset += tmpOffset
 
 	// Get the list of assets
-	assets, tmpOffset, err := parseSizedList(parseAsset, data[offset:])
+	assets, tmpOffset, err := decodeSizedList(decodeAsset, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -66,7 +66,7 @@ func parseMoCap(data []byte) (*MoCap, int, error) {
 	offset += tmpOffset
 
 	// Get the list of labeled markers
-	labeledMarkers, tmpOffset, err := parseSizedList(parseMarker, data[offset:])
+	labeledMarkers, tmpOffset, err := decodeSizedList(decodeMarker, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -74,7 +74,7 @@ func parseMoCap(data []byte) (*MoCap, int, error) {
 	offset += tmpOffset
 
 	// Get the list of force plates
-	forcePlates, tmpOffset, err := parseSizedList(parseForcePlate, data[offset:])
+	forcePlates, tmpOffset, err := decodeSizedList(decodeForcePlate, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -82,7 +82,7 @@ func parseMoCap(data []byte) (*MoCap, int, error) {
 	offset += tmpOffset
 
 	// Get the list of devices
-	devices, tmpOffset, err := parseSizedList(parseDevice, data[offset:])
+	devices, tmpOffset, err := decodeSizedList(decodeDevice, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -90,7 +90,7 @@ func parseMoCap(data []byte) (*MoCap, int, error) {
 	offset += tmpOffset
 
 	// Get the frame suffix
-	fs, tmpOffset, err := parseFrameSuffix(data[offset:])
+	fs, tmpOffset, err := decodeFrameSuffix(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}

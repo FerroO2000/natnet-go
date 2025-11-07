@@ -7,20 +7,20 @@ type Skeleton struct {
 
 const skeletonMinLen = idLen + listMinLen
 
-func parseSkeleton(data []byte) (*Skeleton, int, error) {
+func decodeSkeleton(data []byte) (*Skeleton, int, error) {
 	if len(data) < skeletonMinLen {
 		return nil, 0, ErrTooShort
 	}
 
 	s := new(Skeleton)
 
-	id, offset, err := parseID(data)
+	id, offset, err := decodeID(data)
 	if err != nil {
 		return nil, 0, err
 	}
 	s.ID = id
 
-	rigidBodies, offset, err := parseList(parseRigidBody, data[offset:])
+	rigidBodies, offset, err := decodeList(decodeRigidBody, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -35,9 +35,9 @@ type SkeletonDesc struct {
 	RigidBodies []*RigidBodyDesc
 }
 
-const skeletonDescMinLen = nameMinLen + idLen + int32Len
+const skeletonDescMinLen = stringMinLen + idLen + int32Len
 
-func parseSkeletonDesc(data []byte) (*SkeletonDesc, int, error) {
+func decodeSkeletonDesc(data []byte) (*SkeletonDesc, int, error) {
 	if len(data) < skeletonDescMinLen {
 		return nil, 0, ErrTooShort
 	}
@@ -45,14 +45,14 @@ func parseSkeletonDesc(data []byte) (*SkeletonDesc, int, error) {
 	sd := new(SkeletonDesc)
 
 	// Get the name
-	name, offset, err := parseName(data)
+	name, offset, err := decodeString(data)
 	if err != nil {
 		return nil, 0, err
 	}
 	sd.Name = name
 
 	// Get the id
-	id, tmpOffset, err := parseID(data[offset:])
+	id, tmpOffset, err := decodeID(data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
@@ -60,7 +60,7 @@ func parseSkeletonDesc(data []byte) (*SkeletonDesc, int, error) {
 	offset += tmpOffset
 
 	// Get the rigid bodies
-	rigidBodies, offset, err := parseList(parseRigidBodyDesc, data[offset:])
+	rigidBodies, offset, err := decodeList(decodeRigidBodyDesc, data[offset:])
 	if err != nil {
 		return nil, 0, err
 	}
